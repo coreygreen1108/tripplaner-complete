@@ -9,24 +9,22 @@ $(function () {
         activity: $('#activity-list').children('ul')
     };
 
-    var collections = {
-        hotel: hotels,
-        restaurant: restaurants,
-        activity: activities
-    };
+    // var collections = {
+    //     hotel: hotels,
+    //     restaurant: restaurants,
+    //     activity: activities
+    // };
 
     var $itinerary = $('#itinerary');
-
     var $addDayButton = $('#day-add');
     var $dayTitle = $('#day-title').children('span');
     var $removeDayButton = $('#day-title').children('button');
     var $dayButtonList = $('.day-buttons');
 
     var days = [
-        []
     ];
 
-    var currentDayNum = 1;
+    var currentDayNum = 0;
 
     /*
     --------------------------
@@ -40,22 +38,30 @@ $(function () {
         var $select = $this.siblings('select');
         var sectionName = $select.attr('data-type');
         var itemId = parseInt($select.val(), 10);
+        var itemName = $select.val();
+        // var itemId = $(itemName)
         var $list = $listGroups[sectionName];
-        var collection = collections[sectionName];
-        var item = findInCollection(collection, itemId);
+        // var collection = collections[sectionName];
+        // var item = findInCollection(collection, itemId);
+        //var collection = typeObj[sectionName];
+        addEventToDB(); 
+        //var promiseForItem = addEventToDB(sectionName, itemId, currentDayNum)
+        // var item = findInCollection(collection, itemId);
+        // console.log("HERE IS YOUR ITEM:" + item);
+        promiseForItem.done(function(item){
+                        console.log(item)
+            var marker = drawMarker(map, sectionName, item[1].location);
 
-        var marker = drawMarker(map, sectionName, item.place.location);
+            $list.append(create$item(item[0]));
 
-        $list.append(create$item(item));
+            days[currentDayNum - 1].push({
+                item: item[0],
+                marker: marker,
+                type: sectionName
+            });
 
-        days[currentDayNum - 1].push({
-            item: item,
-            marker: marker,
-            type: sectionName
-        });
-
-        mapFit();
-
+            mapFit();
+        }).fail(console.error.bind(console));
     });
 
     $itinerary.on('click', 'button.remove', function () {
@@ -75,11 +81,8 @@ $(function () {
     });
 
     $addDayButton.on('click', function () {
-        var newDayNum = days.length + 1;
-        var $newDayButton = createDayButton(newDayNum);
-        days.push([]);
-        $addDayButton.before($newDayButton);
-        switchDay(newDayNum);
+        makeNewButton();
+        addDay(currentDayNum);
     });
 
     $dayButtonList.on('click', '.day-btn', function () {
@@ -97,13 +100,16 @@ $(function () {
         }
 
         reRenderDayButtons();
+        removeDay(currentDayNum);
         switchDay(1);
+
 
     });
 
     selectItems('hotel');
     selectItems('restaurant');
     selectItems('activity');
+    dealWithDayOne();
 
     /*
     --------------------------
@@ -176,6 +182,7 @@ $(function () {
             });
         }
 
+
     }
 
     function reRenderDayButtons() {
@@ -219,6 +226,38 @@ $(function () {
         }
         return -1;
     }
+
+    function dealWithDayOne(){
+        var dayOne = getDays();
+        dayOne.done(function(days){
+                console.log(days);
+             if(days.length == 0) {
+                addDay(1); 
+                makeNewButton();
+             }
+             else {
+                days.forEach(function(day){
+                    makeNewButton();
+                })
+             }
+        }).fail(console.error.bind(console));
+        // .filter(function(day){
+        //     return day.number === 1;
+        // })
+        // console.log(dayOne);
+        // console.log(dayOne);
+        // console.log(dayOne.length);
+       
+    }
+
+    function makeNewButton(){
+        var newDayNum = days.length + 1;
+        var $newDayButton = createDayButton(newDayNum);
+        days.push([]);
+        $addDayButton.before($newDayButton);
+        switchDay(newDayNum);
+    }
+
 
     // End utility functions ----
 

@@ -26,8 +26,16 @@ router.get('/:id', function(req, res){
 	})
 })
 
-router.delete('/:id', function(req, res){
-
+router.delete('/', function(req, res){
+	var number = +(req.body.day);
+	Days.destroy ({
+		where: {
+			number: number
+		}
+	})
+	.then(function(updatedDays){
+		return Days.renumber(number)
+	})
 })
 
 router.post('/', function(req, res){
@@ -46,6 +54,8 @@ router.post('/:id/restaurants', function(req, res) {
 	day_restaurant.create({
 		dayId: id,
 		restaurantId: restaurantId 
+	}).then(function(day_rest){
+		res.send(day_rest);
 	})
 })
 
